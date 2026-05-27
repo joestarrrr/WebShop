@@ -1,0 +1,42 @@
+@* _LoginPartial.cshtml
+   ─────────────────────────────────────────────────────────────────────────
+   This partial view renders the Login / Register links (when logged out)
+   or the username + Logout button (when logged in).
+
+   It is injected into _Layout.cshtml via:  <partial name="_LoginPartial" />
+
+   @inject SignInManager<IdentityUser>  — checks if the user is logged in
+   @inject UserManager<IdentityUser>    — retrieves the current user's info
+   ─────────────────────────────────────────────────────────────────────────
+*@
+@using Microsoft.AspNetCore.Identity
+@inject SignInManager<IdentityUser> SignInManager
+@inject UserManager<IdentityUser> UserManager
+
+<ul class="navbar-nav">
+@if (SignInManager.IsSignedIn(User))
+{
+    @* Logged-in: show the user's email and a Logout button *@
+    <li class="nav-item">
+        <a class="nav-link text-white" asp-area="Identity" asp-page="/Account/Manage/Index">
+            Hello, @UserManager.GetUserName(User)!
+        </a>
+    </li>
+    <li class="nav-item">
+        <form class="form-inline" asp-area="Identity" asp-page="/Account/Logout"
+              asp-route-returnUrl="@Url.Page("/Index", new { area = "" })" method="post">
+            <button type="submit" class="nav-link btn btn-link text-white">Logout</button>
+        </form>
+    </li>
+}
+else
+{
+    @* Not logged in: show Register and Login links *@
+    <li class="nav-item">
+        <a class="nav-link text-white" asp-area="Identity" asp-page="/Account/Register">Register</a>
+    </li>
+    <li class="nav-item">
+        <a class="nav-link text-white" asp-area="Identity" asp-page="/Account/Login">Login</a>
+    </li>
+}
+</ul>

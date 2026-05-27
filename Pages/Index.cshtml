@@ -1,0 +1,82 @@
+@* ============================================================================
+   Pages/Index.cshtml — The Home page
+   ============================================================================
+
+   Routing: This file maps to the root URL "/"
+   How?     Razor Pages uses the file path relative to the Pages folder:
+              Pages/Index.cshtml        →  /
+              Pages/Products/List.cshtml →  /Products/List
+
+   @page  — marks this file as a Razor Page (required on every page)
+   @model — connects this view to its PageModel (Index.cshtml.cs)
+   ============================================================================
+*@
+@page
+@model IndexModel
+@{
+    ViewData["Title"] = "Home";
+}
+
+@* Hero / welcome section *@
+<div class="px-4 py-5 my-3 text-center">
+    <h1 class="display-4 fw-bold">Welcome to WebShop</h1>
+    <p class="lead text-muted">
+        A simple beginner-friendly ASP.NET Core webshop built with Razor Pages,
+        Entity Framework Core and ASP.NET Identity.
+    </p>
+
+    @* Show different content depending on login state *@
+    @if (User.Identity?.IsAuthenticated == true)
+    {
+        <p class="text-success fw-semibold">You are logged in as <strong>@User.Identity.Name</strong>.</p>
+        <a class="btn btn-primary btn-lg" asp-area="Identity" asp-page="/Account/Manage/Index">My Account</a>
+    }
+    else
+    {
+        <div class="d-flex justify-content-center gap-2">
+            <a class="btn btn-primary btn-lg" asp-area="Identity" asp-page="/Account/Register">Get Started</a>
+            <a class="btn btn-outline-secondary btn-lg" asp-area="Identity" asp-page="/Account/Login">Login</a>
+        </div>
+    }
+</div>
+
+@* Info cards — explain what this project is about *@
+<div class="row row-cols-1 row-cols-md-3 g-4 mt-2">
+    <div class="col">
+        <div class="card h-100 shadow-sm">
+            <div class="card-body">
+                <h5 class="card-title">&#128196; Razor Pages</h5>
+                <p class="card-text">
+                    Each page is a <code>.cshtml</code> file (the view) paired with a
+                    <code>.cshtml.cs</code> file (the PageModel / logic).
+                    Routing is based on the file path — no controllers needed.
+                </p>
+            </div>
+        </div>
+    </div>
+    <div class="col">
+        <div class="card h-100 shadow-sm">
+            <div class="card-body">
+                <h5 class="card-title">&#128202; Entity Framework Core</h5>
+                <p class="card-text">
+                    EF Core maps C# classes to database tables. Run
+                    <code>dotnet ef migrations add &lt;Name&gt;</code> to create a migration,
+                    then <code>dotnet ef database update</code> to apply it.
+                </p>
+            </div>
+        </div>
+    </div>
+    <div class="col">
+        <div class="card h-100 shadow-sm">
+            <div class="card-body">
+                <h5 class="card-title">&#128272; ASP.NET Identity</h5>
+                <p class="card-text">
+                    Identity handles user registration, login, logout and password
+                    hashing out of the box. User data is stored in the same SQL Server
+                    LocalDB database as the rest of the app.
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
+
