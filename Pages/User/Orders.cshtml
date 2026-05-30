@@ -20,15 +20,53 @@
         }
         else
         {
-            <ul class="list-group mb-3">
-                @foreach (var item in Model.CartItems)
-                {
-                    <li class="list-group-item d-flex justify-content-between">
-                        <span>@item.Name</span>
-                        <strong>@item.Price.ToString("0.00") kr</strong>
-                    </li>
-                }
-            </ul>
+            <div class="table-responsive mb-3">
+                <table class="table table-sm align-middle mb-0">
+                    <thead>
+                        <tr>
+                            <th>Product</th>
+                            <th class="text-end">Unit</th>
+                            <th class="text-center">Qty</th>
+                            <th class="text-end">Total</th>
+                            <th class="text-end">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var item in Model.CartItems)
+                        {
+                            <tr>
+                                <td>@item.Name</td>
+                                <td class="text-end">@item.UnitPrice.ToString("0.00") kr</td>
+                                <td class="text-center">@item.Quantity</td>
+                                <td class="text-end">@item.LineTotal.ToString("0.00") kr</td>
+                                <td class="text-end">
+                                    <div class="btn-group btn-group-sm">
+                                        <form method="post" asp-page-handler="DecreaseCartItem" class="d-inline">
+                                            <input type="hidden" name="cartItemId" value="@item.CartItemId" />
+                                            <button type="submit" class="btn btn-outline-secondary">-</button>
+                                        </form>
+                                        <form method="post" asp-page-handler="IncreaseCartItem" class="d-inline">
+                                            <input type="hidden" name="cartItemId" value="@item.CartItemId" />
+                                            <button type="submit" class="btn btn-outline-secondary">+</button>
+                                        </form>
+                                        <form method="post" asp-page-handler="RemoveCartItem" class="d-inline">
+                                            <input type="hidden" name="cartItemId" value="@item.CartItemId" />
+                                            <button type="submit" class="btn btn-outline-danger">Remove</button>
+                                        </form>
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="mb-3 text-end">
+                <strong>
+                    Cart total:
+                    @Model.CartItems.Sum(i => i.LineTotal).ToString("0.00") kr
+                </strong>
+            </div>
 
             <form method="post" asp-page-handler="CreateOrder">
                 <button type="submit" class="btn btn-primary">Create Order</button>
@@ -53,11 +91,12 @@
                         <strong>Order #@order.Id</strong>
                         <span>@order.CreatedAtUtc.ToLocalTime().ToString("yyyy-MM-dd HH:mm")</span>
                     </div>
+                    <div class="mb-1">Status: <strong>@order.Status</strong></div>
                     <div class="mb-2">Total: <strong>@order.TotalAmount.ToString("0.00") kr</strong></div>
                     <ul class="mb-0">
                         @foreach (var item in order.Items)
                         {
-                            <li>@item.ProductName - @item.UnitPrice.ToString("0.00") kr</li>
+                            <li>@item.ProductName x @item.Quantity - @item.LineTotal.ToString("0.00") kr</li>
                         }
                     </ul>
                 </div>

@@ -6,6 +6,11 @@
 
 <h1 class="mb-3">Admin Orders</h1>
 
+@if (!string.IsNullOrWhiteSpace(Model.StatusMessage))
+{
+    <div class="alert alert-info">@Model.StatusMessage</div>
+}
+
 @if (Model.Orders.Count == 0)
 {
     <p>No orders found.</p>
@@ -20,11 +25,26 @@ else
                 <span>@order.CreatedAtUtc.ToLocalTime().ToString("yyyy-MM-dd HH:mm")</span>
             </div>
             <div class="mb-1">User: <strong>@order.UserId</strong></div>
+            <div class="mb-1">Status: <strong>@order.Status</strong></div>
             <div class="mb-2">Total: <strong>@order.TotalAmount.ToString("0.00") kr</strong></div>
+            <form method="post" asp-page-handler="UpdateStatus" class="row g-2 align-items-center mb-3">
+                <input type="hidden" name="orderId" value="@order.Id" />
+                <div class="col-auto">
+                    <select name="status" class="form-select form-select-sm">
+                        <option value="Pending" selected="@(order.Status == "Pending")">Pending</option>
+                        <option value="Processing" selected="@(order.Status == "Processing")">Processing</option>
+                        <option value="Completed" selected="@(order.Status == "Completed")">Completed</option>
+                        <option value="Cancelled" selected="@(order.Status == "Cancelled")">Cancelled</option>
+                    </select>
+                </div>
+                <div class="col-auto">
+                    <button type="submit" class="btn btn-sm btn-primary">Update status</button>
+                </div>
+            </form>
             <ul class="mb-0">
                 @foreach (var item in order.Items)
                 {
-                    <li>@item.ProductName - @item.UnitPrice.ToString("0.00") kr</li>
+                    <li>@item.ProductName x @item.Quantity - @item.LineTotal.ToString("0.00") kr</li>
                 }
             </ul>
         </div>

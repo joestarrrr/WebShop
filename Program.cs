@@ -180,6 +180,36 @@ userApi.MapPost("/cart/{productId:int}", (int productId, HttpContext httpContext
         : Results.NotFound(new { message = "Product not found." });
 });
 
+userApi.MapPost("/cart/items/{cartItemId:int}/increase", (int cartItemId, HttpContext httpContext, IShopService shopService) =>
+{
+    var userId = GetUserId(httpContext.User);
+    var ok = shopService.IncreaseCartItemQuantity(userId, cartItemId);
+
+    return ok
+        ? Results.Ok(new { message = "Cart item increased." })
+        : Results.NotFound(new { message = "Cart item not found." });
+});
+
+userApi.MapPost("/cart/items/{cartItemId:int}/decrease", (int cartItemId, HttpContext httpContext, IShopService shopService) =>
+{
+    var userId = GetUserId(httpContext.User);
+    var ok = shopService.DecreaseCartItemQuantity(userId, cartItemId);
+
+    return ok
+        ? Results.Ok(new { message = "Cart item decreased." })
+        : Results.NotFound(new { message = "Cart item not found." });
+});
+
+userApi.MapDelete("/cart/items/{cartItemId:int}", (int cartItemId, HttpContext httpContext, IShopService shopService) =>
+{
+    var userId = GetUserId(httpContext.User);
+    var ok = shopService.RemoveCartItem(userId, cartItemId);
+
+    return ok
+        ? Results.Ok(new { message = "Cart item removed." })
+        : Results.NotFound(new { message = "Cart item not found." });
+});
+
 userApi.MapPost("/orders", (HttpContext httpContext, IShopService shopService) =>
 {
     var userId = GetUserId(httpContext.User);
@@ -234,10 +264,20 @@ adminApi.MapGet("/orders", (IShopService shopService) =>
     return Results.Ok(shopService.GetAllOrders());
 });
 
+adminApi.MapPut("/orders/{id:int}/status", (int id, UpdateOrderStatusRequest request, IShopService shopService) =>
+{
+    var updated = shopService.UpdateOrderStatus(id, request.Status);
+    return updated
+        ? Results.Ok(new { message = "Order status updated." })
+        : Results.BadRequest(new { message = "Invalid status or order not found." });
+});
+
 app.Run();
 
 static string GetUserId(ClaimsPrincipal user)
 {
     return user.FindFirstValue(ClaimTypes.NameIdentifier) ?? user.Identity?.Name ?? "anonymous";
 }
+
+public record UpdateOrderStatusRequest(string Status);
 

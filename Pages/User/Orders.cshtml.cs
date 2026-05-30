@@ -38,6 +38,33 @@ public class OrdersModel : PageModel
         return Page();
     }
 
+    public IActionResult OnPostIncreaseCartItem(int cartItemId)
+    {
+        var userId = GetUserId();
+        var ok = _shopService.IncreaseCartItemQuantity(userId, cartItemId);
+        StatusMessage = ok ? "Quantity increased." : "Cart item not found.";
+        LoadData();
+        return Page();
+    }
+
+    public IActionResult OnPostDecreaseCartItem(int cartItemId)
+    {
+        var userId = GetUserId();
+        var ok = _shopService.DecreaseCartItemQuantity(userId, cartItemId);
+        StatusMessage = ok ? "Quantity decreased." : "Cart item not found.";
+        LoadData();
+        return Page();
+    }
+
+    public IActionResult OnPostRemoveCartItem(int cartItemId)
+    {
+        var userId = GetUserId();
+        var ok = _shopService.RemoveCartItem(userId, cartItemId);
+        StatusMessage = ok ? "Item removed from cart." : "Cart item not found.";
+        LoadData();
+        return Page();
+    }
+
     private void LoadData()
     {
         var userId = GetUserId();

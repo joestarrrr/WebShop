@@ -36,6 +36,9 @@ Default local admin:
 
 - `GET /api/user/cart`
 - `POST /api/user/cart/{productId}`
+- `POST /api/user/cart/items/{cartItemId}/increase`
+- `POST /api/user/cart/items/{cartItemId}/decrease`
+- `DELETE /api/user/cart/items/{cartItemId}`
 - `POST /api/user/orders`
 - `GET /api/user/orders`
 
@@ -45,9 +48,11 @@ Default local admin:
 - `PUT /api/admin/products/{id}`
 - `DELETE /api/admin/products/{id}`
 - `GET /api/admin/orders`
+- `PUT /api/admin/orders/{id}/status`
 
 ## Razor Pages
 
+- `/Products/Index` (logged in user can add items to cart)
 - `/User/Orders` (logged in user)
 - `/Admin/Orders` (admin only)
 

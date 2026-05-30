@@ -7,9 +7,9 @@ namespace WebShop.Services;
 public record ProductDto(int Id, string Name, decimal Price, string Description);
 public record CreateProductRequest(string Name, decimal Price, string Description);
 public record UpdateProductRequest(string Name, decimal Price, string Description);
-public record CartItemDto(int ProductId, string Name, decimal Price);
-public record OrderItemDto(int ProductId, string ProductName, decimal UnitPrice);
-public record OrderDto(int Id, string UserId, DateTime CreatedAtUtc, decimal TotalAmount, IReadOnlyList<OrderItemDto> Items);
+public record CartItemDto(int CartItemId, int ProductId, string Name, decimal UnitPrice, int Quantity, decimal LineTotal);
+public record OrderItemDto(int ProductId, string ProductName, decimal UnitPrice, int Quantity, decimal LineTotal);
+public record OrderDto(int Id, string UserId, DateTime CreatedAtUtc, decimal TotalAmount, string Status, IReadOnlyList<OrderItemDto> Items);
 
 public class ShopService : IShopService
 {
@@ -90,18 +90,74 @@ public class ShopService : IShopService
             return false;
         }
 
-        var cartItem = new CartItem
+        var existingItem = _dbContext.CartItems.FirstOrDefault(ci => ci.UserId == userId && ci.ProductId == productId);
+        if (existingItem is null)
         {
-            UserId = userId,
-            ProductId = product.Id,
-            ProductName = product.Name,
-            UnitPrice = product.Price,
-            Quantity = 1
-        };
+            var cartItem = new CartItem
+            {
+                UserId = userId,
+                ProductId = product.Id,
+                ProductName = product.Name,
+                UnitPrice = product.Price,
+                Quantity = 1
+            };
 
-        _dbContext.CartItems.Add(cartItem);
+            _dbContext.CartItems.Add(cartItem);
+        }
+        else
+        {
+            existingItem.Quantity += 1;
+        }
+
         _dbContext.SaveChanges();
 
+        return true;
+    }
+
+    public bool IncreaseCartItemQuantity(string userId, int cartItemId)
+    {
+        var item = _dbContext.CartItems.FirstOrDefault(ci => ci.Id == cartItemId && ci.UserId == userId);
+        if (item is null)
+        {
+            return false;
+        }
+
+        item.Quantity += 1;
+        _dbContext.SaveChanges();
+        return true;
+    }
+
+    public bool DecreaseCartItemQuantity(string userId, int cartItemId)
+    {
+        var item = _dbContext.CartItems.FirstOrDefault(ci => ci.Id == cartItemId && ci.UserId == userId);
+        if (item is null)
+        {
+            return false;
+        }
+
+        if (item.Quantity <= 1)
+        {
+            _dbContext.CartItems.Remove(item);
+        }
+        else
+        {
+            item.Quantity -= 1;
+        }
+
+        _dbContext.SaveChanges();
+        return true;
+    }
+
+    public bool RemoveCartItem(string userId, int cartItemId)
+    {
+        var item = _dbContext.CartItems.FirstOrDefault(ci => ci.Id == cartItemId && ci.UserId == userId);
+        if (item is null)
+        {
+            return false;
+        }
+
+        _dbContext.CartItems.Remove(item);
+        _dbContext.SaveChanges();
         return true;
     }
 
@@ -110,7 +166,15 @@ public class ShopService : IShopService
         return _dbContext.CartItems
             .AsNoTracking()
             .Where(ci => ci.UserId == userId)
-            .Select(ci => new CartItemDto(ci.ProductId, ci.ProductName, ci.UnitPrice * ci.Quantity))
+            .OrderBy(ci => ci.Id)
+            .Select(ci => new CartItemDto(
+                ci.Id,
+                ci.ProductId,
+                ci.ProductName,
+                ci.UnitPrice,
+                ci.Quantity,
+                ci.UnitPrice * ci.Quantity
+            ))
             .ToList();
     }
 
@@ -126,19 +190,21 @@ public class ShopService : IShopService
         }
 
         var items = cartRows
-            .Select(ci => new CartItemDto(ci.ProductId, ci.ProductName, ci.UnitPrice * ci.Quantity))
+            .Select(ci => new CartItemDto(ci.Id, ci.ProductId, ci.ProductName, ci.UnitPrice, ci.Quantity, ci.UnitPrice * ci.Quantity))
             .ToList();
 
         var order = new Order
         {
             UserId = userId,
             CreatedAtUtc = DateTime.UtcNow,
-            TotalAmount = items.Sum(i => i.Price),
+            Status = "Pending",
+            TotalAmount = items.Sum(i => i.LineTotal),
             Items = items.Select(i => new OrderItem
             {
                 ProductId = i.ProductId,
                 ProductName = i.Name,
-                UnitPrice = i.Price
+                UnitPrice = i.UnitPrice,
+                Quantity = i.Quantity
             }).ToList()
         };
 
@@ -151,7 +217,8 @@ public class ShopService : IShopService
             order.UserId,
             order.CreatedAtUtc,
             order.TotalAmount,
-            order.Items.Select(i => new OrderItemDto(i.ProductId, i.ProductName, i.UnitPrice)).ToList()
+            order.Status,
+            order.Items.Select(i => new OrderItemDto(i.ProductId, i.ProductName, i.UnitPrice, i.Quantity, i.UnitPrice * i.Quantity)).ToList()
         );
     }
 
@@ -167,8 +234,9 @@ public class ShopService : IShopService
                 o.UserId,
                 o.CreatedAtUtc,
                 o.TotalAmount,
+                o.Status,
                 o.Items
-                    .Select(i => new OrderItemDto(i.ProductId, i.ProductName, i.UnitPrice))
+                    .Select(i => new OrderItemDto(i.ProductId, i.ProductName, i.UnitPrice, i.Quantity, i.UnitPrice * i.Quantity))
                     .ToList()
             ))
             .ToList();
@@ -185,10 +253,30 @@ public class ShopService : IShopService
                 o.UserId,
                 o.CreatedAtUtc,
                 o.TotalAmount,
+                o.Status,
                 o.Items
-                    .Select(i => new OrderItemDto(i.ProductId, i.ProductName, i.UnitPrice))
+                    .Select(i => new OrderItemDto(i.ProductId, i.ProductName, i.UnitPrice, i.Quantity, i.UnitPrice * i.Quantity))
                     .ToList()
             ))
             .ToList();
+    }
+
+    public bool UpdateOrderStatus(int orderId, string status)
+    {
+        var allowed = new[] { "Pending", "Processing", "Completed", "Cancelled" };
+        if (!allowed.Contains(status, StringComparer.OrdinalIgnoreCase))
+        {
+            return false;
+        }
+
+        var order = _dbContext.Orders.FirstOrDefault(o => o.Id == orderId);
+        if (order is null)
+        {
+            return false;
+        }
+
+        order.Status = allowed.First(s => s.Equals(status, StringComparison.OrdinalIgnoreCase));
+        _dbContext.SaveChanges();
+        return true;
     }
 }
