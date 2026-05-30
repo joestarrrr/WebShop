@@ -1,0 +1,32 @@
+@page
+@model WebShop.Pages.Admin.OrdersModel
+@{
+    ViewData["Title"] = "Admin Orders";
+}
+
+<h1 class="mb-3">Admin Orders</h1>
+
+@if (Model.Orders.Count == 0)
+{
+    <p>No orders found.</p>
+}
+else
+{
+    @foreach (var order in Model.Orders)
+    {
+        <div class="border rounded p-3 mb-3">
+            <div class="d-flex justify-content-between mb-2">
+                <strong>Order #@order.Id</strong>
+                <span>@order.CreatedAtUtc.ToLocalTime().ToString("yyyy-MM-dd HH:mm")</span>
+            </div>
+            <div class="mb-1">User: <strong>@order.UserId</strong></div>
+            <div class="mb-2">Total: <strong>@order.TotalAmount.ToString("0.00") kr</strong></div>
+            <ul class="mb-0">
+                @foreach (var item in order.Items)
+                {
+                    <li>@item.ProductName - @item.UnitPrice.ToString("0.00") kr</li>
+                }
+            </ul>
+        </div>
+    }
+}

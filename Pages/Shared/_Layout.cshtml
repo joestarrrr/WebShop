@@ -36,7 +36,18 @@
                         <li class="nav-item">
                             <a class="nav-link text-white" asp-area="" asp-page="/Index">Home</a>
                         </li>
-                        @* Products, Cart, etc. will be added in later steps *@
+                        @if (User.Identity?.IsAuthenticated == true)
+                        {
+                            <li class="nav-item">
+                                <a class="nav-link text-white" asp-area="" asp-page="/User/Orders">My Orders</a>
+                            </li>
+                        }
+                        @if (User.IsInRole("Admin"))
+                        {
+                            <li class="nav-item">
+                                <a class="nav-link text-white" asp-area="" asp-page="/Admin/Orders">Admin Orders</a>
+                            </li>
+                        }
                     </ul>
 
                     @* Right-side: Login / Register (provided by Identity UI partial) *@

@@ -1,0 +1,67 @@
+@page
+@model WebShop.Pages.User.OrdersModel
+@{
+    ViewData["Title"] = "My Orders";
+}
+
+<h1 class="mb-3">My Orders</h1>
+
+@if (!string.IsNullOrWhiteSpace(Model.StatusMessage))
+{
+    <div class="alert alert-info">@Model.StatusMessage</div>
+}
+
+<div class="card mb-4">
+    <div class="card-header">Current Cart</div>
+    <div class="card-body">
+        @if (Model.CartItems.Count == 0)
+        {
+            <p class="mb-0">Your cart is empty.</p>
+        }
+        else
+        {
+            <ul class="list-group mb-3">
+                @foreach (var item in Model.CartItems)
+                {
+                    <li class="list-group-item d-flex justify-content-between">
+                        <span>@item.Name</span>
+                        <strong>@item.Price.ToString("0.00") kr</strong>
+                    </li>
+                }
+            </ul>
+
+            <form method="post" asp-page-handler="CreateOrder">
+                <button type="submit" class="btn btn-primary">Create Order</button>
+            </form>
+        }
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-header">Order History</div>
+    <div class="card-body">
+        @if (Model.Orders.Count == 0)
+        {
+            <p class="mb-0">No orders yet.</p>
+        }
+        else
+        {
+            @foreach (var order in Model.Orders)
+            {
+                <div class="border rounded p-3 mb-3">
+                    <div class="d-flex justify-content-between mb-2">
+                        <strong>Order #@order.Id</strong>
+                        <span>@order.CreatedAtUtc.ToLocalTime().ToString("yyyy-MM-dd HH:mm")</span>
+                    </div>
+                    <div class="mb-2">Total: <strong>@order.TotalAmount.ToString("0.00") kr</strong></div>
+                    <ul class="mb-0">
+                        @foreach (var item in order.Items)
+                        {
+                            <li>@item.ProductName - @item.UnitPrice.ToString("0.00") kr</li>
+                        }
+                    </ul>
+                </div>
+            }
+        }
+    </div>
+</div>
